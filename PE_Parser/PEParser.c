@@ -9,16 +9,17 @@ void __load_headers(PE* pe, unsigned char* data){
     pe->DOS_header= (IMAGE_DOS_HEADER*)data;
 
     //Jump to PE Header
-    pe->NT_headers = (IMAGE_NT_HEADERS*)(((unsigned char*)pe->DOS_header ) + pe->DOS_header->e_lfanew);
+    pe->NT_headers = (IMAGE_NT_HEADERS*)(((char*)pe->DOS_header) + pe->DOS_header->e_lfanew);
 
 }
 
 void __load_sections(PE* pe, unsigned char* data){
-    IMAGE_SECTION_HEADER* sections = (IMAGE_SECTION_HEADER*)(pe->NT_headers + 1);
-    printf("[+] PE has %d sections\n", pe->NT_headers->FileHeader.NumberOfSections);
-    for (int i = 0; i < pe->NT_headers->FileHeader.NumberOfSections; i++) {
-        printf("Found %s section at 0x%08X\n", sections[i].Name, sections[i].VirtualAddress);
-    }
+    pe->DOS_header= (IMAGE_DOS_HEADER*)data;
+    pe->NT_headers = (IMAGE_NT_HEADERS*)(((char*)pe->DOS_header) + pe->DOS_header->e_lfanew);
+    printf("[+] PE has %X sections\n", pe->NT_headers->FileHeader.NumberOfSections);
+    //for (int i = 0; i < pe->NT_headers->FileHeader.NumberOfSections; i++) {
+    //    printf("Found %s section at 0x%08X\n", sections[i].Name, sections[i].VirtualAddress);
+    //}
 }
 
 int __get_size_from_file(FILE* f){
@@ -51,10 +52,7 @@ unsigned char* PE_GetDataFromFile(char* filename){
     FILE* f = fopen(filename, "r");
     unsigned char* data = __allocate_data_from_file(f);
     if(data!=NULL){
-        __init_data(data);
-        for(int i=0;i<_msize(data);i++){
-            data[i] = fgetc(f);
-        }
+        fread(data, 1, _msize(data), f);
     }
     return data; 
 }
@@ -67,7 +65,10 @@ void PE_print(PE* pe){
     printf("NT Header offset : 0x%X\n", pe->DOS_header->e_lfanew);
 
     printf("--[NT Header]--\n");
-    printf("Image Base : 0x%08X\n", pe->NT_headers->OptionalHeader.ImageBase);
+    printf("Signature : 0x%4d\n", pe->NT_headers->Signature);
+    printf("Magic : 0x%04X\n", pe->NT_headers->OptionalHeader.Magic);
+    printf("Image Base : 0x%016X\n", pe->NT_headers->OptionalHeader.ImageBase);
+    printf("Number of sections: %d\n", pe->NT_headers->FileHeader.NumberOfSections);
 }
 
 PE* PE_Parse(unsigned char* data){

@@ -21,5 +21,5 @@ typedef struct PE{
     IMAGE_DOS_HEADER* DOS_header;
     IMAGE_NT_HEADERS* NT_headers;
 
-    SECTIONS_LIST* sections_list;
+    //SECTIONS_LIST* sections_list;
 } PE;
